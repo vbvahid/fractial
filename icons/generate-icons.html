@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate PWA Icons</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+    .sizes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin: 2rem 0; }
+    .size-card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; text-align: center; }
+    .size-card canvas { max-width: 100%; border: 1px solid #eee; border-radius: 4px; }
+    button { background: #2563eb; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+    button:hover { background: #1d4ed8; }
+    .download-all { background: #16a34a; }
+    .download-all:hover { background: #15803d; }
+    .status { margin-top: 1rem; padding: 1rem; border-radius: 8px; display: none; }
+    .status.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; display: block; }
+    .status.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; display: block; }
+  </style>
+</head>
+<body>
+  <h1>تولید آیکون‌های PWA</h1>
+  <p>این صفحه آیکون‌های PNG را از فایل SVG تولید می‌کند. روی دکمه‌ها کلیک کنید تا فایل‌ها دانلود شوند.</p>
+  
+  <div class="sizes" id="sizes"></div>
+  
+  <button id="downloadAll" class="download-all">دانلود همه</button>
+  
+  <div class="status" id="status"></div>
+
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+    const container = document.getElementById('sizes');
+    const status = document.getElementById('status');
+    const generatedCanvases = new Map();
+
+    // Load SVG and draw to canvases
+    async function generateIcons() {
+      const svgResponse = await fetch('icon.svg');
+      const svgText = await svgResponse.text();
+      
+      for (const size of sizes) {
+        const card = document.createElement('div');
+        card.className = 'size-card';
+        card.innerHTML = `<h4>${size}×${size}</h4><canvas width="${size}" height="${size}"></canvas><br><button class="download-btn" data-size="${size}">دانلود</button>`;
+        container.appendChild(card);
+        
+        const canvas = card.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Create image from SVG
+        const img = new Image();
+        const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(svgBlob);
+        
+        await new Promise((resolve, reject) => {
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, size, size);
+            URL.revokeObjectURL(url);
+            generatedCanvases.set(size, canvas);
+            resolve();
+          };
+          img.onerror = reject;
+          img.src = url;
+        });
+      }
+    }
+
+    // Download single icon
+    container.addEventListener('click', (e) => {
+      if (e.target.classList.contains('download-btn')) {
+        const size = parseInt(e.target.dataset.size);
+        const canvas = generatedCanvases.get(size);
+        if (canvas) {
+          downloadCanvas(canvas, `icon-${size}.png`);
+        }
+      }
+    });
+
+    // Download all icons
+    document.getElementById('downloadAll').addEventListener('click', async () => {
+      for (const [size, canvas] of generatedCanvases) {
+        downloadCanvas(canvas, `icon-${size}.png`);
+        await new Promise(r => setTimeout(r, 100)); // Small delay between downloads
+      }
+      showStatus('همه آیکون‌ها دانلود شدند. آنها را در پوشه icons قرار دهید.', 'success');
+    });
+
+    function downloadCanvas(canvas, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function showStatus(message, type) {
+      status.textContent = message;
+      status.className = `status ${type}`;
+    }
+
+    generateIcons().catch(err => {
+      console.error(err);
+      showStatus('خطا در تولید آیکون‌ها: ' + err.message, 'error');
+    });
+  </script>
+</body>
+</html>

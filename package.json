@@ -1,0 +1,14 @@
+{
+  "name": "fractial",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ابزار محاسبات کسری، GCD/LCM و ساده‌سازی کسر — استاتیک و آماده استقرار روی Cloudflare Pages",
+  "scripts": {
+    "test": "node --test",
+    "start": "npx serve ."
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  }
+}
