@@ -2,12 +2,12 @@
   "name": "فریکشن — محاسبه‌گر کسری",
   "short_name": "فریکشن",
   "description": "ابزار محاسبات کسری، بزرگترین مقسوم/کوچکترین مضرب مشترک، و ساده‌سازی کسر — کاملاً آفلاین",
-  "start_url": "/",
+  "start_url": "/fractial/",
   "display": "standalone",
   "background_color": "#f6f8fb",
   "theme_color": "#2563eb",
   "orientation": "portrait-primary",
-  "scope": "/",
+  "scope": "/fractial/",
   "lang": "fa",
   "dir": "rtl",
   "icons": [
@@ -73,21 +73,21 @@
       "name": "محاسبه کسر",
       "short_name": "محاسبه",
       "description": "عملیات روی دو کسر (جمع، تفریق، ضرب، تقسیم)",
-      "url": "/#section-arithmetic",
+      "url": "/fractial/#section-arithmetic",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "GCD / LCM",
       "short_name": "GCD/LCM",
       "description": "بزرگترین مقسوم و کوچکترین مضرب مشترک",
-      "url": "/#section-gcd",
+      "url": "/fractial/#section-gcd",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "ساده‌سازی کسر",
       "short_name": "ساده‌سازی",
       "description": "ساده‌سازی کسر با صورت اعشاری",
-      "url": "/#section-simplify",
+      "url": "/fractial/#section-simplify",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ],

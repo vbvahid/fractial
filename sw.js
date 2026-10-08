@@ -1,16 +1,27 @@
 /**
  * Service Worker for Fractial PWA
  * Provides offline support with cache-first strategy for static assets
+ * Configured for GitHub Pages deployment at /fractial/
  */
 
+const BASE_PATH = '/fractial';
 const CACHE_NAME = 'fractial-v1';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/fraction.js',
-  '/manifest.json',
+  BASE_PATH + '/',
+  BASE_PATH + '/index.html',
+  BASE_PATH + '/css/style.css',
+  BASE_PATH + '/js/app.js',
+  BASE_PATH + '/js/fraction.js',
+  BASE_PATH + '/manifest.json',
+  BASE_PATH + '/icons/icon.svg',
+  BASE_PATH + '/icons/icon-72.png',
+  BASE_PATH + '/icons/icon-96.png',
+  BASE_PATH + '/icons/icon-128.png',
+  BASE_PATH + '/icons/icon-144.png',
+  BASE_PATH + '/icons/icon-152.png',
+  BASE_PATH + '/icons/icon-192.png',
+  BASE_PATH + '/icons/icon-384.png',
+  BASE_PATH + '/icons/icon-512.png',
   // Fonts (preconnect, not cached directly)
   'https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap',
   'https://fonts.gstatic.com/s/vazirmatn/v32/Vazirmatn-Regular.woff2',
@@ -66,6 +77,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Only handle requests under our base path
+  if (!url.pathname.startsWith(BASE_PATH)) {
+    return;
+  }
+
   // HTML pages - network-first with cache fallback
   if (request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(networkFirstStrategy(request));
@@ -117,7 +133,7 @@ async function cacheFirstStrategy(request) {
     console.log('[SW] Network fetch failed:', error);
     // Return offline page for navigation requests
     if (request.mode === 'navigate') {
-      return cache.match('/index.html');
+      return cache.match(BASE_PATH + '/index.html');
     }
     throw error;
   }
@@ -141,7 +157,7 @@ async function networkFirstStrategy(request) {
     }
     // Return cached index.html for navigation
     if (request.mode === 'navigate') {
-      return cache.match('/index.html');
+      return cache.match(BASE_PATH + '/index.html');
     }
     throw error;
   }
