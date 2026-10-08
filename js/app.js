@@ -181,8 +181,10 @@ function init() {
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+      // Detect base path for GitHub Pages (/fractial/) or root (/)
+      const basePath = '/fractial';
+      const registration = await navigator.serviceWorker.register(basePath + '/sw.js', {
+        scope: basePath + '/'
       });
       console.log('[fractial] SW registered:', registration.scope);
 
