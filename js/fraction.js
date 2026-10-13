@@ -10,6 +10,15 @@ function err(message) {
   return e;
 }
 
+/** تبدیل ارقام فارسی و عربی به ارقام انگلیسی (ASCII) */
+function normalizeDigits(s) {
+  return s
+    .replace(/[۰-۹]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x06F0 + 0x30))
+    .replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 0x0660 + 0x30))
+    .replace(/[،]/g, ',')
+    .replace(/[٫]/g, '.');
+}
+
 /** بزرگ‌ترین مقسوم مشترک (اقلیدسی) — ورودی باید BigInt غیرمنفی باشد */
 export function gcd(a, b) {
   a = a < 0n ? -a : a;
@@ -34,7 +43,7 @@ export function lcm(a, b) {
  * مثال: "1.5" → 150n (نمایندهٔ 1.50)
  */
 export function parseFractionPart(raw) {
-  const s = String(raw ?? '').trim().replace(/[٬,\s]/g, '');
+  const s = normalizeDigits(String(raw ?? '').trim().replace(/[٬,\s]/g, ''));
   if (s === '') throw err('لطفاً مقدار را وارد کنید');
   if (!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(s)) throw err(`«${s}» یک عدد معتبر نیست`);
 
@@ -55,7 +64,7 @@ export function parseFractionPart(raw) {
  * تجزیه عدد صحیح ساده (برای GCD/LCM) — اعشار پذیرفته نمی‌شود
  */
 export function parseInteger(raw) {
-  const s = String(raw ?? '').trim().replace(/[٬,\s]/g, '');
+  const s = normalizeDigits(String(raw ?? '').trim().replace(/[٬,\s]/g, ''));
   if (s === '') throw err('لطفاً مقدار را وارد کنید');
   if (!/^[+-]?\d+$/.test(s)) throw err(`«${s}» یک عدد صحیح معتبر نیست`);
   return BigInt(s);

@@ -29,6 +29,13 @@ test('تجزیه بخش کسری (پشتیبانی از اعشار ۲ رقم، �
   assert.equal(parseFractionPart('0.05'), 5n);
   assert.equal(parseFractionPart('-2.25'), -225n);
   assert.equal(parseFractionPart(' 3 '), 300n);
+  // ارقام فارسی
+  assert.equal(parseFractionPart('۱۵'), 1500n);
+  assert.equal(parseFractionPart('۱.۵'), 150n);
+  assert.equal(parseFractionPart('-۲.۲۵'), -225n);
+  // ارقام عربی
+  assert.equal(parseFractionPart('١٥'), 1500n);
+  assert.equal(parseFractionPart('١.٥'), 150n);
   assert.throws(() => parseFractionPart('1.234'), /۲ رقم/);
   assert.throws(() => parseFractionPart('abc'), /عدد معتبر/);
   assert.throws(() => parseFractionPart(''), /وارد کنید/);
@@ -38,6 +45,12 @@ test('تجزیه عدد صحیح (بدون مقیاس، برای GCD/LCM)', () =
   assert.equal(parseInteger('15'), 15n);
   assert.equal(parseInteger('-4'), -4n);
   assert.equal(parseInteger(' 42 '), 42n);
+  // ارقام فارسی
+  assert.equal(parseInteger('۱۵'), 15n);
+  assert.equal(parseInteger('-۴'), -4n);
+  // ارقام عربی
+  assert.equal(parseInteger('١٥'), 15n);
+  assert.equal(parseInteger('٤'), 4n);
   assert.throws(() => parseInteger('1.5'), /عدد صحیح/);
   assert.throws(() => parseInteger('abc'), /عدد صحیح/);
   assert.throws(() => parseInteger(''), /وارد کنید/);
