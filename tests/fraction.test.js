@@ -12,6 +12,8 @@ import {
   gcdLcm,
   formatFraction,
   formatFractionDecimal,
+  convertToDivisor,
+  toDecimal,
 } from '../js/fraction.js';
 
 test('GCD / LCM', () => {
@@ -149,4 +151,52 @@ test('ساده‌سازی اعشاری‌دوست (مخرج صحیح، صورت 
   // منفی‌ها
   const r9 = simplifyDecimalFriendly('-1', '32');
   assert.equal(formatFractionDecimal(r9), '-0.25/8');
+});
+
+test('تبدیل کسر به مخرج مشخص (مقسم)', () => {
+  // 1/2 با مقسم 6 = 3/6
+  assert.equal(formatFractionDecimal(convertToDivisor('1', '2', '6')), '3/6');
+  // 1/2 با مقسم 3 = 1.5/3
+  assert.equal(formatFractionDecimal(convertToDivisor('1', '2', '3')), '1.5/3');
+  // 1/32 با مقسم 8 = 0.25/8
+  assert.equal(formatFractionDecimal(convertToDivisor('1', '32', '8')), '0.25/8');
+  // مقدار کسر تغییر نمی‌کند: 2/3 با مقسم 6 = 4/6
+  assert.equal(formatFractionDecimal(convertToDivisor('2', '3', '6')), '4/6');
+  // کسر منفی
+  assert.equal(formatFractionDecimal(convertToDivisor('-1', '2', '6')), '-3/6');
+  // کسر صفر
+  assert.equal(formatFractionDecimal(convertToDivisor('0', '5', '9')), '0/9');
+  // ورودی فارسی و عربی
+  assert.equal(formatFractionDecimal(convertToDivisor('۱', '۲', '۶')), '3/6');
+  assert.equal(formatFractionDecimal(convertToDivisor('١', '٢', '٦')), '3/6');
+  // کسر مقیاس‌دار: 1.5/3 = 1/2 → با مقسم 6 = 3/6
+  assert.equal(formatFractionDecimal(convertToDivisor('1.5', '3', '6')), '3/6');
+  // مقدار اعشاری خروجی با ورودی برابر است
+  assert.equal(toDecimal(convertToDivisor('1', '2', '6').value), '0.5');
+  assert.equal(toDecimal(convertToDivisor('1', '3', '9').value), '0.333333');
+  // رگرسیون: مقدار کمتر از ۰٫۰۱ نباید در مقدار اعشاری صفر شود (باگ تقسیم صحیح)
+  const tiny = convertToDivisor('1', '32', '8'); // = 0.25/8 = 0.03125
+  assert.equal(formatFractionDecimal(tiny), '0.25/8');
+  assert.equal(toDecimal(tiny.value), '0.03125');
+  assert.equal(toDecimal(convertToDivisor('1', '8', '2').value), '0.125');
+  // مقدار اعشاری مستقل از انتخاب مقسم ثابت می‌ماند
+  assert.equal(
+    toDecimal(convertToDivisor('1', '3', '9').value),
+    toDecimal(convertToDivisor('1', '3', '30').value)
+  );
+});
+
+test('خطاهای تبدیل به مقسم', () => {
+  // مقسم صفر
+  assert.throws(() => convertToDivisor('1', '2', '0'), /صفر/);
+  // مقسم منفی
+  assert.throws(() => convertToDivisor('1', '2', '-6'), /مثبت/);
+  // مقسم اعشاری
+  assert.throws(() => convertToDivisor('1', '2', '2.5'), /عدد صحیح/);
+  // مقسم نامعتبر برای مخرج ۳ (باید مضرب ۳ باشد)
+  assert.throws(() => convertToDivisor('1', '3', '2'), /مضربی از 3/);
+  // مخرج صفر
+  assert.throws(() => convertToDivisor('1', '0', '6'), /صفر/);
+  // مقسم خالی
+  assert.throws(() => convertToDivisor('1', '2', ''), /وارد کنید/);
 });

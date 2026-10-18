@@ -107,10 +107,39 @@
       <div class="error" id="simp-error" hidden></div>
     </section>
 
+    <!-- بخش ۴: تبدیل کسر به مخرج مشخص (مقسم) -->
+    <section class="card" id="section-divisor">
+      <h2>تبدیل کسر به مخرج مشخص (مقسم)</h2>
+      <p class="hint">کسر را به کسر هم‌ارزی با مخرج دلخواه (مقسم) تبدیل می‌کند؛ صورت می‌تواند تا ۲ رقم اعشار داشته باشد.</p>
+      <div class="fraction-inputs-vertical">
+        <div class="fraction-group">
+          <label>کسر</label>
+          <div class="fraction-row">
+            <input type="text" id="dv-num" placeholder="صورت" autocomplete="off">
+            <span class="frac-bar">/</span>
+            <input type="text" id="dv-den" placeholder="مخرج" autocomplete="off">
+          </div>
+        </div>
+        <div class="fraction-group">
+          <label for="dv-divisor">مقسم (مخرج جدید)</label>
+          <input type="text" id="dv-divisor" placeholder="مثال: 6" autocomplete="off">
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn primary" id="dv-btn">تبدیل</button>
+        <button class="btn ghost" id="dv-clear" type="button">پاک کردن</button>
+      </div>
+      <div class="result-area" id="dv-result" hidden>
+        <div class="result-line"><strong>کسر هم‌ارز:</strong> <span id="dv-out"></span></div>
+        <div class="result-line decimal"><strong>مقدار اعشاری:</strong> <span id="dv-dec"></span></div>
+      </div>
+      <div class="error" id="dv-error" hidden></div>
+    </section>
+
     <footer>
       <p>بدون سرور، کاملاً سمت کلاینت — مستقر روی GitHub Pages</p>
     </footer>
   </main>
-  <script type="module" src="js/app.js?v=20261005-2"></script>
+  <script type="module" src="js/app.js?v=20261018"></script>
 </body>
 </html>

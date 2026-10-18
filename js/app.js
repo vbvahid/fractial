@@ -11,7 +11,8 @@ import {
   formatFractionDecimal,
   toDecimal,
   formatInt,
-} from './fraction.js?v=20261005';
+  convertToDivisor,
+} from './fraction.js?v=20261018';
 
 console.log('[fractial] app.js loaded, readyState:', document.readyState);
 
@@ -170,6 +171,45 @@ function init() {
 
   [sNum, sDen].forEach(el => {
     if (el) el.addEventListener('keydown', e => e.key === 'Enter' && simpBtn?.click());
+  });
+
+  // ============================================================
+  // بخش ۴: تبدیل کسر به مخرج مشخص (مقسم)
+  // ============================================================
+  const dvNum = $('dv-num'), dvDen = $('dv-den'), dvDivisor = $('dv-divisor');
+  const dvBtn = $('dv-btn');
+  const dvClear = $('dv-clear');
+  const dvError = $('dv-error');
+  const dvResult = $('dv-result');
+  const dvOut = $('dv-out');
+  const dvDec = $('dv-dec');
+
+  console.log('[fractial] Divisor Elements:', { dvNum: !!dvNum, dvDen: !!dvDen, dvDivisor: !!dvDivisor, dvBtn: !!dvBtn, dvClear: !!dvClear });
+
+  if (dvBtn) {
+    dvBtn.addEventListener('click', () => {
+      console.log('[fractial] Divisor button clicked');
+      clearErrors(dvError);
+      try {
+        const res = convertToDivisor(dvNum.value, dvDen.value, dvDivisor.value);
+        if (dvOut) dvOut.textContent = formatFractionDecimal(res);
+        if (dvDec) dvDec.textContent = toDecimal(res.value);
+        showResult(dvResult, true);
+      } catch (e) {
+        console.error('[fractial] Divisor Error:', e);
+        showResult(dvResult, false);
+        setError(dvError, e.validation ? e.message : 'خطای غیرمنتظره: ' + e.message);
+      }
+    });
+  }
+
+  // دکمه پاک کردن برای بخش تبدیل مقسم
+  if (dvClear) {
+    dvClear.addEventListener('click', createClearHandler([dvNum, dvDen, dvDivisor], dvResult, dvError));
+  }
+
+  [dvNum, dvDen, dvDivisor].forEach(el => {
+    if (el) el.addEventListener('keydown', e => e.key === 'Enter' && dvBtn?.click());
   });
 
   console.log('[fractial] init() completed');
