@@ -5,7 +5,9 @@
  */
 
 const BASE_PATH = '/fractial';
-const CACHE_NAME = 'fractial-v1';
+// NOTE: bump this version whenever cached assets change so that the
+// `activate` handler below drops the stale cache and clients re-fetch.
+const CACHE_NAME = 'fractial-v2';
 const STATIC_ASSETS = [
   BASE_PATH + '/',
   BASE_PATH + '/index.html',
