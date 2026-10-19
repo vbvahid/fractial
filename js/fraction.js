@@ -190,20 +190,22 @@ export function simplifyDecimalFriendly(numRaw, denRaw) {
 
 /**
  * تبدیل کسر به کسر هم‌ارز با مخرج مشخص (مقسم)
- * مثال: 1/2 با مقسم 6 → 3/6 و 1/2 با مقسم 3 → 1.5/3 و 1/32 با مقسم 8 → 0.25/8
+ * مثال: 1/2 با مقسم 6 → 3/6 و 1/32 با مقسم 8 → 0.25/8 و 1/3 با مقسم 3 → 1/3
  *
- * قاعدهٔ دقیق بودن تبدیل: صورت جدید × ۱۰۰ باید بر مخرج کسر بخش‌پذیر باشد
- * (چون صورت خروجی حداکثر ۲ رقم اعشار دارد).
- * پس مقسم معتبر باید مضربی از «مخرج / gcd(مخرج, 100)» باشد.
- * مثال: مخرج 3 → مقسم باید مضربی از 3 باشد؛ مخرج 32 → مضربی از 8.
+ * هیچ محدودیتی در تعداد ارقام اعشار صورت خروجی وجود ندارد؛ اگر مقسم مضرب مخرج
+ * (پس از ساده‌سازی) باشد، تبدیل دقیق است و صورت به‌صورت کامل نمایش داده می‌شود.
+ * در غیر این صورت (مثلاً 1/3 با مقسم 2) نزدیک‌ترین مقدار با گرد کردن محاسبه
+ * و با «≈» نمایش داده می‌شود — یعنی هر مقسمی پذیرفته می‌شود.
  *
  * @param {string} numRaw صورت کسر (تا ۲ رقم اعشار)
  * @param {string} denRaw مخرج کسر (تا ۲ رقم اعشار)
  * @param {string} divisorRaw مقسم (عدد صحیح مثبت) — همان مخرج جدید
- * @returns {{ num: bigint, den: bigint, value: { num: bigint, den: bigint }, original: { num: bigint, den: bigint } }}
+ * @returns {{ num: bigint, den: bigint, value: { num: bigint, den: bigint },
+ *            exact: boolean, original: { num: bigint, den: bigint } }}
  *   «num» با مقیاس ۱۰۰ است (برای formatFractionDecimal) و «den» همان مقسم واردشده.
  *   «value» کسر دقیقِ هم‌ارز است (برای toDecimal) با مخرج مقسم × ۱۰۰ — مثال: 1/2 با مقسم 6 →
  *   { num: 300n, den: 6n, value: { num: 300n, den: 600n } } که «3/6» نمایش داده می‌شود.
+ *   «exact» مشخص می‌کند تبدیل بدون گرد کردن انجام شده یا نه.
  */
 export function convertToDivisor(numRaw, denRaw, divisorRaw) {
   const original = parseFraction(numRaw, denRaw);
@@ -211,23 +213,34 @@ export function convertToDivisor(numRaw, denRaw, divisorRaw) {
   if (divisor === 0n) throw err('مقسم نمی‌تواند صفر باشد');
   if (divisor < 0n) throw err('مقسم باید عددی مثبت باشد');
 
-  // صورت جدید = مقدار کسر × مقسم — با مقیاس ۱۰۰ برای پشتیبانی از ۲ رقم اعشار
-  const scaledNum = original.num * divisor * 100n;
+  // صورت/مخرج پایه با مقیاس ۱۰۰ برای پشتیبانی از ۲ رقم اعشار
+  const baseNumScaled = original.num * 100n;   // مقیاس ۱۰۰
+  const baseDen = original.den;                // صحیح
 
-  if (scaledNum % original.den !== 0n) {
-    const step = original.den / gcd(original.den, 100n);
-    throw err(
-      `این کسر با مقسم «${formatInt(divisor)}» به‌صورت دقیق (تا ۲ رقم اعشار) تبدیل نمی‌شود؛ ` +
-      `مقسم باید مضربی از ${formatInt(step)} باشد (مثلاً ${formatInt(step)} یا ${formatInt(step * 2n)})`
-    );
+  // صورت جدید با مقیاس ۱۰۰ = (مقدار کسر × مقسم) × ۱۰۰
+  const scaledNum = baseNumScaled * divisor;
+
+  if (scaledNum % baseDen === 0n) {
+    // تبدیل دقیق — هر تعداد رقم اعشار؛ صورت کامل نمایش داده می‌شود
+    const newNum = scaledNum / baseDen;        // با مقیاس ۱۰۰
+    // کسر دقیقِ هم‌ارز (برای toDecimal): مقدار = (newNum / 100) ÷ divisor = newNum / (divisor × 100)
+    // نکته: این‌جا نباید newNum را بر ۱۰۰ تقسیم صحیح کرد، چون برای مقادیر کمتر از ۰٫۰۱
+    // نتیجه‌اش صفر می‌شود (مثال: 0.25/8 → newNum=25 → 25n/100n = 0n).
+    const value = { num: newNum, den: divisor * 100n };
+    return { num: newNum, den: divisor, value, exact: true, original };
   }
 
-  const newNum = scaledNum / original.den;              // با مقیاس ۱۰۰ (برای نمایش)
-  // کسر دقیقِ هم‌ارز (برای toDecimal): مقدار = (newNum / 100) ÷ divisor = newNum / (divisor × 100)
-  // نکته: این‌جا نباید newNum را بر ۱۰۰ تقسیم صحیح کرد، چون برای مقادیر کمتر از ۰٫۰۱
-  // نتیجه‌اش صفر می‌شود (مثال: 0.25/8 → newNum=25 → 25n/100n = 0n).
+  // تبدیل دقیق ممکن نیست (مقسم مضرب مخرج ساده‌شده نیست) → نزدیک‌ترین مقدار با گرد کردن.
+  // مقدار هر واحد مقسم برابر 1/divisor است؛ صورت را با نزدیک‌ترین مضرب 0.01 حساب می‌کنیم
+  // تا هم‌خوان با مقیاس ۱۰۰ نمایش داده شود:  newNum ≈ (num/den) × divisor × 100
+  const target = baseNumScaled * divisor;                 // = مقدار × مقسم × ۱۰۰
+  const q = target / baseDen;
+  const r = target % baseDen;
+  const newNum = (r * 2n >= baseDen) ? q + 1n : q;         // گرد کردن نیم‌به‌بالا، مقیاس ۱۰۰
+
+  // مقدار اعشاری = (newNum / 100) ÷ divisor = newNum / (divisor × 100)
   const value = { num: newNum, den: divisor * 100n };
-  return { num: newNum, den: divisor, value, original };
+  return { num: newNum, den: divisor, value, exact: false, original };
 }
 
 /** محاسبه GCD و LCM دو عدد صحیح */

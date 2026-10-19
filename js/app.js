@@ -12,7 +12,7 @@ import {
   toDecimal,
   formatInt,
   convertToDivisor,
-} from './fraction.js?v=20261018';
+} from './fraction.js?v=20261018-2';
 
 console.log('[fractial] app.js loaded, readyState:', document.readyState);
 
@@ -192,8 +192,10 @@ function init() {
       clearErrors(dvError);
       try {
         const res = convertToDivisor(dvNum.value, dvDen.value, dvDivisor.value);
-        if (dvOut) dvOut.textContent = formatFractionDecimal(res);
-        if (dvDec) dvDec.textContent = toDecimal(res.value);
+        // «≈» یعنی مقسم مضرب مخرج ساده‌شده نبود و مقدار گرد شده است.
+        const prefix = res.exact ? '' : '≈ ';
+        if (dvOut) dvOut.textContent = prefix + formatFractionDecimal(res);
+        if (dvDec) dvDec.textContent = prefix + toDecimal(res.value);
         showResult(dvResult, true);
       } catch (e) {
         console.error('[fractial] Divisor Error:', e);

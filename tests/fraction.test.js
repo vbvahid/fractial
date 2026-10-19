@@ -186,6 +186,26 @@ test('تبدیل کسر به مخرج مشخص (مقسم)', () => {
   );
 });
 
+test('تبدیل به مقسم بدون محدودیت ۲ رقم اعشار (هر مقسمی پذیرفته می‌شود)', () => {
+  // قبلاً مقسم ۳ برای مخرج ۳ خطا می‌داد؛ حالا دقیق و ساده است: 1/3 با مقسم 3 → 1/3
+  assert.equal(formatFractionDecimal(convertToDivisor('1', '3', '3')), '1/3');
+  assert.equal(convertToDivisor('1', '3', '3').exact, true);
+  // 10/3 با مقسم 9 = 30/9 (عدد صحیح، هر تعداد رقم)
+  assert.equal(formatFractionDecimal(convertToDivisor('10', '3', '9')), '30/9');
+  // صورت با اعشار: 1/6 با مقسم 9 = 1.5/9
+  assert.equal(formatFractionDecimal(convertToDivisor('1', '6', '9')), '1.5/9');
+  // مقسم بزرگ (چند هزار) هم دقیق است — دیگر پیام خطا ندارد
+  assert.equal(formatFractionDecimal(convertToDivisor('1', '2', '1040')), '520/1040');
+  assert.equal(formatFractionDecimal(convertToDivisor('1', '2', '1000000')), '500000/1000000');
+  // مقسم غیرمضرب → گرد شده و exact=false (مثلاً 1/3 با مقسم 2 → 0.67/2 ≈ 0.333)
+  const approx = convertToDivisor('1', '3', '2');
+  assert.equal(approx.exact, false);
+  assert.equal(formatFractionDecimal(approx), '0.67/2');
+  assert.equal(toDecimal(approx.value), '0.335');
+  // مقدار گرد شده به مقدار اصلی نزدیک است (خطا کمتر از یک واحد مقیاس)
+  assert.equal(formatFractionDecimal(convertToDivisor('2', '3', '7')), '4.67/7');
+});
+
 test('خطاهای تبدیل به مقسم', () => {
   // مقسم صفر
   assert.throws(() => convertToDivisor('1', '2', '0'), /صفر/);
@@ -193,8 +213,6 @@ test('خطاهای تبدیل به مقسم', () => {
   assert.throws(() => convertToDivisor('1', '2', '-6'), /مثبت/);
   // مقسم اعشاری
   assert.throws(() => convertToDivisor('1', '2', '2.5'), /عدد صحیح/);
-  // مقسم نامعتبر برای مخرج ۳ (باید مضرب ۳ باشد)
-  assert.throws(() => convertToDivisor('1', '3', '2'), /مضربی از 3/);
   // مخرج صفر
   assert.throws(() => convertToDivisor('1', '0', '6'), /صفر/);
   // مقسم خالی
