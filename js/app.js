@@ -4,6 +4,7 @@
 import {
   parseFraction,
   calculate,
+  calculateMany,
   simplify,
   simplifyDecimalFriendly,
   gcdLcm,
@@ -12,7 +13,7 @@ import {
   toDecimal,
   formatInt,
   convertToDivisor,
-} from './fraction.js?v=20261018-2';
+} from './fraction.js?v=20261019';
 
 console.log('[fractial] app.js loaded, readyState:', document.readyState);
 
@@ -42,34 +43,140 @@ function init() {
   console.log('[fractial] init() called, readyState:', document.readyState);
 
   // ============================================================
-  // بخش ۱: عملیات روی دو کسر
+  // بخش ۱: عملیات روی ۲ تا ۱۰ کسر (پویا)
   // ============================================================
-  const aNum = $('a-num'), aDen = $('a-den');
-  const bNum = $('b-num'), bDen = $('b-den');
+  const arithList = $('arith-list');
   const arithError = $('arith-error');
   const arithResult = $('arith-result');
   const arithRaw = $('arith-raw');
   const arithSimp = $('arith-simp');
   const arithDec = $('arith-dec');
   const arithClear = $('arith-clear');
+  const arithAdd = $('arith-add');
+  const arithRemove = $('arith-remove');
+  const arithCount = $('arith-count');
 
-  console.log('[fractial] Elements found:', { aNum: !!aNum, aDen: !!aDen, bNum: !!bNum, bDen: !!bDen, arithError: !!arithError, arithResult: !!arithResult, arithRaw: !!arithRaw, arithSimp: !!arithSimp, arithDec: !!arithDec, arithClear: !!arithClear });
+  const MIN_FRACTIONS = 2;
+  const MAX_FRACTIONS = 10;
 
-  function getFractionA() { return parseFraction(aNum.value, aDen.value); }
-  function getFractionB() { return parseFraction(bNum.value, bDen.value); }
+  // نام ترتیبی کسرها به فارسی
+  const ORDINALS = ['اول', 'دوم', 'سوم', 'چهارم', 'پنجم', 'ششم', 'هفتم', 'هشتم', 'نهم', 'دهم'];
+
+  // فهرست کسرها؛ دو کسر اول همان فیلدهای موجود در HTML هستند (جلوگیری از رگرسیون)
+  const fractions = [
+    { num: $('a-num'), den: $('a-den') },
+    { num: $('b-num'), den: $('b-den') },
+  ];
+
+  console.log('[fractial] Arithmetic Elements:', {
+    arithList: !!arithList, arithAdd: !!arithAdd, arithRemove: !!arithRemove,
+    arithCount: !!arithCount, arithError: !!arithError, arithResult: !!arithResult,
+  });
+
+  /** ورودی‌های کسر جدید (سوم به بعد) را می‌سازد و به فهرست اضافه می‌کند */
+  function addFractionRow(index) {
+    const group = document.createElement('div');
+    group.className = 'fraction-group arith-extra';
+
+    const label = document.createElement('label');
+    label.textContent = `کسر ${ORDINALS[index]}`;
+
+    const row = document.createElement('div');
+    row.className = 'fraction-row';
+
+    const num = document.createElement('input');
+    num.type = 'text';
+    num.id = `arith-num-${index + 1}`;
+    num.placeholder = 'صورت';
+    num.autocomplete = 'off';
+
+    const bar = document.createElement('span');
+    bar.className = 'frac-bar';
+    bar.textContent = '/';
+
+    const den = document.createElement('input');
+    den.type = 'text';
+    den.id = `arith-den-${index + 1}`;
+    den.placeholder = 'مخرج';
+    den.autocomplete = 'off';
+
+    row.appendChild(num);
+    row.appendChild(bar);
+    row.appendChild(den);
+    group.appendChild(label);
+    group.appendChild(row);
+    arithList.appendChild(group);
+
+    const pair = { num, den, group };
+    // Enter روی هر فیلد = جمع
+    [num, den].forEach(el => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleArithmetic('add');
+      });
+    });
+    return pair;
+  }
+
+  /** به‌روزرسانی وضعیت دکمه‌ها، شمارنده و برچسب‌ها پس از هر تغییر تعداد */
+  function refreshCountUI() {
+    const n = fractions.length;
+    if (arithCount) {
+      arithCount.textContent = `${n.toLocaleString('fa-IR')} کسر از ${MAX_FRACTIONS.toLocaleString('fa-IR')}`;
+    }
+    if (arithAdd) arithAdd.disabled = n >= MAX_FRACTIONS;
+    if (arithRemove) arithRemove.disabled = n <= MIN_FRACTIONS;
+    if (arithList) arithList.classList.toggle('many', n > 2);
+    // برچسب کسرها به‌روز شود (در صورت حذف و افزودن مجدد)
+    fractions.forEach((f, i) => {
+      const label = f.group?.querySelector('label');
+      if (label) label.textContent = `کسر ${ORDINALS[i]}`;
+    });
+  }
+
+  function increaseFraction() {
+    if (fractions.length >= MAX_FRACTIONS) return;
+    const index = fractions.length;
+    fractions.push(addFractionRow(index));
+    refreshCountUI();
+    fractions[index].num.focus();
+  }
+
+  function decreaseFraction() {
+    if (fractions.length <= MIN_FRACTIONS) return;
+    const removed = fractions.pop();
+    if (removed.group) removed.group.remove();
+    refreshCountUI();
+    // پاک کردن نتیجه/خطای قبلی چون ورودی تغییر کرده
+    showResult(arithResult, false);
+    setError(arithError, '');
+  }
 
   function handleArithmetic(op) {
-    console.log('[fractial] handleArithmetic:', op);
+    console.log('[fractial] handleArithmetic:', op, 'count:', fractions.length);
     clearErrors(arithError);
     try {
-      const a = getFractionA();
-      const b = getFractionB();
-      const res = calculate(a, b, op);
+      // فقط فیلدهای پرشده محاسبه می‌شوند (اگر کسر اضافه‌شده خالی رها شده باشد نادیده گرفته می‌شود)
+      const parsed = [];
+      fractions.forEach(f => {
+        const emptyNum = String(f.num?.value ?? '').trim() === '';
+        const emptyDen = String(f.den?.value ?? '').trim() === '';
+        if (emptyNum && emptyDen) return; // کسر کاملاً خالی نادیده گرفته می‌شود
+        parsed.push(parseFraction(f.num.value, f.den.value));
+      });
+
+      if (parsed.length < MIN_FRACTIONS) {
+        throw Object.assign(new Error('برای محاسبه حداقل ۲ کسر لازم است'), { validation: true });
+      }
+
+      const res = parsed.length === 2
+        ? calculate(parsed[0], parsed[1], op)
+        : calculateMany(parsed, op);
+
       if (arithRaw) arithRaw.textContent = formatFraction(res.raw);
       if (arithSimp) arithSimp.textContent = formatFraction(res.simplified);
       if (arithDec) arithDec.textContent = toDecimal(res.simplified);
       showResult(arithResult, true);
-      console.log('[fractial] Result shown:', formatFraction(res.simplified));
+      console.log('[fractial] Result shown:', formatFraction(res.simplified), `(${parsed.length} کسر)`);
     } catch (e) {
       console.error('[fractial] Error:', e);
       showResult(arithResult, false);
@@ -86,14 +193,28 @@ function init() {
     });
   });
 
-  // دکمه پاک کردن برای بخش محاسبه
+  // دکمه‌های افزودن/کاهش تعداد کسر
+  if (arithAdd) arithAdd.addEventListener('click', increaseFraction);
+  if (arithRemove) arithRemove.addEventListener('click', decreaseFraction);
+
+  // دکمه پاک کردن — فقط مقادیر را خالی می‌کند و تعداد کسرها را حفظ می‌کند
   if (arithClear) {
-    arithClear.addEventListener('click', createClearHandler([aNum, aDen, bNum, bDen], arithResult, arithError));
+    arithClear.addEventListener('click', () => {
+      fractions.forEach(f => {
+        if (f.num) f.num.value = '';
+        if (f.den) f.den.value = '';
+      });
+      showResult(arithResult, false);
+      setError(arithError, '');
+      if (fractions[0].num) fractions[0].num.focus();
+    });
   }
 
-  [aNum, aDen, bNum, bDen].forEach(el => {
+  [fractions[0].num, fractions[0].den, fractions[1].num, fractions[1].den].forEach(el => {
     if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleArithmetic('add'); });
   });
+
+  refreshCountUI();
 
   // ============================================================
   // بخش ۲: GCD / LCM

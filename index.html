@@ -25,10 +25,11 @@
       <p class="subtitle">ابزار محاسبات کسری، بزرگترین مقسوم/کوچکترین مضرب مشترک، و ساده‌سازی کسر</p>
     </header>
 
-    <!-- بخش ۱: عملیات روی دو کسر -->
+    <!-- بخش ۱: عملیات روی ۲ تا ۱۰ کسر -->
     <section class="card" id="section-arithmetic">
-      <h2>عملیات روی دو کسر</h2>
-      <div class="fraction-inputs-vertical">
+      <h2>عملیات روی کسرها</h2>
+      <p class="hint">می‌توانید بین ۲ تا ۱۰ کسر وارد کنید. با دکمه‌های «+ کسر» و «− کسر» تعداد کسرها را تغییر دهید. عملیات از چپ به راست انجام می‌شود.</p>
+      <div class="fraction-inputs-vertical" id="arith-list">
         <div class="fraction-group">
           <label>کسر اول</label>
           <div class="fraction-row">
@@ -44,6 +45,13 @@
             <span class="frac-bar">/</span>
             <input type="text" id="b-den" placeholder="مخرج" autocomplete="off">
           </div>
+        </div>
+      </div>
+      <div class="arith-count-row">
+        <span class="arith-count" id="arith-count">۲ کسر از ۱۰</span>
+        <div class="btn-group arith-count-btns">
+          <button class="btn" id="arith-add" type="button" title="افزودن کسر" aria-label="افزودن کسر">+ کسر</button>
+          <button class="btn ghost" id="arith-remove" type="button" title="کاهش کسر" aria-label="کاهش کسر">− کسر</button>
         </div>
       </div>
       <div class="ops">
@@ -140,6 +148,6 @@
       <p>بدون سرور، کاملاً سمت کلاینت — مستقر روی GitHub Pages</p>
     </footer>
   </main>
-  <script type="module" src="js/app.js?v=20261018-2"></script>
+  <script type="module" src="js/app.js?v=20261019"></script>
 </body>
 </html>

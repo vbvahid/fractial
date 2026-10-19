@@ -7,6 +7,7 @@ import {
   parseInteger,
   parseFraction,
   calculate,
+  calculateMany,
   simplify,
   simplifyDecimalFriendly,
   gcdLcm,
@@ -113,6 +114,69 @@ test('حالات خطا', () => {
   assert.throws(() => parseFraction('1', '0'), /صفر/);
   assert.throws(() => calculate(parseFraction('1', '2'), parseFraction('0', '5'), 'div'), /صفر/);
   assert.throws(() => calculate(parseFraction('1', '2'), parseFraction('1', '3'), 'xyz'), /نامعتبر/);
+});
+
+test('عملیات روی بیش از دو کسر (calculateMany) — جمع و تفریق چپ‌به‌راست', () => {
+  const f = (n, d) => parseFraction(n, d);
+
+  // 1/2 + 1/3 + 1/6 = 1
+  const three = calculateMany([f('1', '2'), f('1', '3'), f('1', '6')], 'add');
+  assert.equal(formatFraction(three.simplified), '1');
+  assert.equal(three.count, 3);
+
+  // 1/2 + 1/4 + 1/4 = 1
+  const three2 = calculateMany([f('1', '2'), f('1', '4'), f('1', '4')], 'add');
+  assert.equal(formatFraction(three2.simplified), '1');
+
+  // 1 - 1/3 - 1/3 = 1/3
+  const sub = calculateMany([f('1', '1'), f('1', '3'), f('1', '3')], 'sub');
+  assert.equal(formatFraction(sub.simplified), '1/3');
+
+  // نام‌ساده‌شدهٔ زنجیره‌ای: (1/2 + 1/3) = 5/6 سپس (5/6 + 1/6) = 36/36
+  // (بدون تقسیم بر GCD، دقیقاً همان مسیر محاسبهٔ دستی چپ‌به‌راست)
+  assert.equal(formatFraction(three.raw), '36/36');
+});
+
+test('عملیات روی بیش از دو کسر — ضرب و تقسیم چپ‌به‌راست', () => {
+  const f = (n, d) => parseFraction(n, d);
+
+  // (2/3) × (3/4) × (1/2) = 1/4
+  const mul = calculateMany([f('2', '3'), f('3', '4'), f('1', '2')], 'mul');
+  assert.equal(formatFraction(mul.simplified), '1/4');
+  assert.equal(formatFraction(mul.raw), '6/24');
+
+  // ((1/2) ÷ (1/4)) ÷ (1/3) = 2 ÷ (1/3) = 6
+  const div = calculateMany([f('1', '2'), f('1', '4'), f('1', '3')], 'div');
+  assert.equal(formatFraction(div.simplified), '6');
+});
+
+test('عملیات روی ۴ تا ۱۰ کسر', () => {
+  const ones = (count) => Array.from({ length: count }, () => parseFraction('1', '2'));
+  // ۴ کسر: (1/2)^4 = 1/16
+  assert.equal(formatFraction(calculateMany(ones(4), 'mul').simplified), '1/16');
+  // ۱۰ کسر (حداکثر مجاز): (1/2)^10 = 1/1024
+  const ten = calculateMany(ones(10), 'mul');
+  assert.equal(ten.count, 10);
+  assert.equal(formatFraction(ten.simplified), '1/1024');
+  // جمع ۱۰ تا 1/2 = 5
+  assert.equal(formatFraction(calculateMany(ones(10), 'add').simplified), '5');
+});
+
+test('محدودیت تعداد کسرها در calculateMany', () => {
+  const f = (n, d) => parseFraction(n, d);
+  // کمتر از ۲ کسر مجاز نیست
+  assert.throws(() => calculateMany([f('1', '2')], 'add'), /حداقل ۲ کسر/);
+  assert.throws(() => calculateMany([], 'add'), /حداقل ۲ کسر/);
+  // بیشتر از ۱۰ کسر مجاز نیست
+  const eleven = Array.from({ length: 11 }, () => f('1', '2'));
+  assert.throws(() => calculateMany(eleven, 'add'), /حداکثر ۱۰ کسر/);
+  // ورودی نامعتبر
+  assert.throws(() => calculateMany(null, 'add'), /حداقل ۲ کسر/);
+});
+
+test('خطای تقسیم بر کسر صفر در calculateMany', () => {
+  const f = (n, d) => parseFraction(n, d);
+  assert.throws(() => calculateMany([f('1', '2'), f('0', '5'), f('1', '3')], 'div'), /صفر/);
 });
 
 test('ساده‌سازی اعشاری‌دوست (مخرج صحیح، صورت تا ۲ رقم اعشار)', () => {

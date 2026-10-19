@@ -196,6 +196,57 @@ input[type="text"]:disabled {
 }
 
 /* ==========================================================================
+   ARITHMETIC — Dynamic fraction count controls
+   ========================================================================== */
+
+.arith-count-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border);
+}
+
+.arith-count {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.arith-count-btns {
+  margin-top: 0;
+  gap: var(--space-2);
+}
+.arith-count-btns .btn {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.875rem;
+}
+
+/* حالت غیرفعال (در حد ۲ یا ۱۰ کسر) */
+.btn:disabled,
+.btn:disabled:hover {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.btn:disabled:active { transform: none; }
+.btn.ghost:disabled:focus-visible { box-shadow: none; }
+
+/* کسرهای اضافه‌شده با انیمیشن ملایم ظاهر شوند */
+.arith-extra {
+  animation: fadeIn 200ms ease;
+}
+
+/* برچسب و ردیف کسرها در فهرست پویا */
+#arith-list .fraction-group { position: relative; }
+
+/* ==========================================================================
    TWO-INPUT ROW (GCD/LCM)
    ========================================================================== */
 
@@ -399,6 +450,17 @@ footer {
   .fraction-group.single {
     max-width: 360px;
     margin: 0 auto;
+  }
+
+  /* با بیش از ۲ کسر، فهرست در حالت ستونی می‌ماند تا فیلدها فشرده نشوند */
+  #arith-list.many {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  #arith-list.many .fraction-group {
+    flex: none;
+    width: 100%;
+    max-width: 360px;
   }
 
   /* Two inputs side-by-side on tablet+ */

@@ -243,6 +243,75 @@ export function convertToDivisor(numRaw, denRaw, divisorRaw) {
   return { num: newNum, den: divisor, value, exact: false, original };
 }
 
+/**
+ * انجام عملیات روی ۲ تا ۱۰ کسر (چپ به راست)
+ *
+ * fold چپ‌به‌راست: ((f1 op f2) op f3) ... — همان نتیجه‌ای که محاسبهٔ دستی
+ * زنجیره‌ای می‌دهد. برای بخش «نام‌ساده‌شده» هم همان زنجیره روی کسرهای نام‌ساده‌شده
+ * تکرار می‌شود تا نمایش مسیر محاسبات برای هر تعداد کسر معنی‌دار بماند.
+ *
+ * @param {Array<{num: bigint, den: bigint}>} fractions حداقل ۲ و حداکثر ۱۰ کسر
+ * @param {"add"|"sub"|"mul"|"div"} op
+ * @returns {{ raw: { num: bigint, den: bigint }, simplified: { num: bigint, den: bigint }, count: number }}
+ */
+export function calculateMany(fractions, op) {
+  if (!Array.isArray(fractions) || fractions.length < 2) {
+    throw err('برای محاسبه حداقل ۲ کسر لازم است');
+  }
+  if (fractions.length > 10) {
+    throw err('حداکثر ۱۰ کسر می‌توانید وارد کنید');
+  }
+
+  let acc = fractions[0];
+  let rawAcc = { num: fractions[0].num, den: fractions[0].den };
+
+  for (let i = 1; i < fractions.length; i++) {
+    const next = fractions[i];
+    const step = calculate(acc, next, op);
+    acc = step.simplified;
+    // همان عملیات روی کسر نام‌ساده‌شده (بدون نرمال‌سازی) برای نمایش مسیر
+    const rawStep = combineRaw(rawAcc, { num: next.num, den: next.den }, op);
+    rawAcc = rawStep;
+  }
+
+  return { raw: rawAcc, simplified: acc, count: fractions.length };
+}
+
+/**
+ * ترکیب خام دو کسر بدون نرمال‌سازی — فقط برای نمایش «نام‌ساده‌شده»
+ * (منطق آن عیناً همان calculate است، بدون تقسیم بر GCD)
+ */
+function combineRaw(a, b, op) {
+  const { num: n1, den: d1 } = a;
+  const { num: n2, den: d2 } = b;
+
+  let rn, rd;
+  switch (op) {
+    case 'add':
+      rn = n1 * d2 + n2 * d1;
+      rd = d1 * d2;
+      break;
+    case 'sub':
+      rn = n1 * d2 - n2 * d1;
+      rd = d1 * d2;
+      break;
+    case 'mul':
+      rn = n1 * n2;
+      rd = d1 * d2;
+      break;
+    case 'div':
+      if (n2 === 0n) throw err('تقسیم بر کسر صفر امکان‌پذیر نیست');
+      rn = n1 * d2;
+      rd = d1 * n2;
+      break;
+    default:
+      throw err('عملیات نامعتبر است');
+  }
+
+  if (rd === 0n) throw err('نتیجه مخرج صفر دارد');
+  return raw(rn, rd);
+}
+
 /** محاسبه GCD و LCM دو عدد صحیح */
 export function gcdLcm(aRaw, bRaw) {
   const a = parseInteger(aRaw);
